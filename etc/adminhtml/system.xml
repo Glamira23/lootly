@@ -1,0 +1,112 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Lootly_Lootly extension
+ *
+ * @category       Lootly
+ * @package        Lootly_Lootly
+ * @copyright      Copyright (c) 2019
+ * @license        http://opensource.org/licenses/osl-3.0.php Open Software License (OSL 3.0)
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="lootly" translate="label" sortOrder="1000">
+            <label><![CDATA[Lootly Loyalty & Referrals]]></label>
+        </tab>
+        <section id="lootlyordernotifier" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="10"
+                 translate="label">
+            <label>Lootly</label>
+            <tab>lootly</tab>
+            <resource>Lootly_Lootly::config_lootly_lootly</resource>
+            <group id="about" type="label" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="0"
+                   translate="label">
+                <label>About Lootly</label>
+                <field id="status" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="60"
+                       translate="label comment">
+                    <label>Status</label>
+                    <frontend_model>Lootly\Lootly\Block\Adminhtml\Test</frontend_model>
+                </field>
+            </group>
+            <group id="general" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="10" translate="label">
+                <label>General API Settings</label>
+                <field id="email" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="10" translate="label"
+                       type="text">
+                    <label>Account Email</label>
+                    <comment>
+                        <![CDATA[This is the email address used to register your <a target="_blank" href="https://lootly.io/account/settings">Lootly Account</a>.]]></comment>
+                </field>
+                <field id="api_key" showInDefault="1" showInStore="1" showInWebsite="1" translate="label" sortOrder="20"
+                       type="text">
+                    <label>API Key</label>
+                    <comment>
+                        <![CDATA[Your API Key can be found within your <a target="_blank" href="http://lootly.io/account/settings">Lootly Profile</a>.]]></comment>
+                </field>
+                <field id="api_secret" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="30"
+                       translate="label" type="text">
+                    <label>API Secret</label>
+                    <comment>
+                        <![CDATA[Your API Secret can be found below the API Key within your <a target="_blank" href="http://lootly.io/index.php/merchant/Integrations/magento2">Lootly Profile</a>.]]></comment>
+                </field>
+                <field id="test" translate="label comment tooltip" type="button" sortOrder="40" showInDefault="1"
+                       showInWebsite="1" showInStore="1">
+                    <label></label>
+                    <frontend_model>Lootly\Lootly\Block\Adminhtml\Verify</frontend_model>
+                </field>
+                <field id="order_status" type="select" showInDefault="1" showInStore="1" showInWebsite="1"
+                       sortOrder="50" translate="label">
+                    <label>Order Status</label>
+                    <comment><![CDATA[When an order status is updated to this, the information will be sent to Lootly.
+                             <br /><br />
+                               <strong>Options:</strong><br />
+                               Processing - when an order is processing<br />
+                               Invoiced - when an order is invoiced<br />
+                               Shipped - when an order is shipped<br />
+                               Complete - when an order is completed<br />
+                               Custom Event - when your custom event occurs, order data is sent to Lootly<br /><br />
+
+                               <strong>Support</strong><br />
+                               Please be sure to visit our
+                               <a target="_blank" href="https://support.lootly.io/en/articles/3359963-magento-2">Magento 2 support article</a>
+                               which guides you through the integration process. You can also email us at: support@lootly.io]]>
+                    </comment>
+                    <source_model>Lootly\Lootly\Model\Order\Status\State</source_model>
+                </field>
+                <field id="event_name" showInDefault="1" showInStore="1" showInWebsite="1" translate="label" sortOrder="55"
+                       type="text">
+                    <label>Event name</label>
+                    <comment><![CDATA[]]></comment>
+                    <depends>
+                        <field id="order_status">custom_event</field>
+                    </depends>
+                </field>
+                <!--<field id="refund_status" type="select" showInDefault="1" showInStore="1" showInWebsite="1"
+                       sortOrder="60" translate="label">
+                    <label>Refund Status</label>
+                    <comment>
+                        <![CDATA[When an order status is updated to this, the points will be subtracted from the customer in Lootly.]]></comment>
+                    <source_model>Lootly\Lootly\Model\Order\Status\Refund</source_model>
+                </field>-->
+            </group>
+            <group id="advanced" showInDefault="1" showInStore="1" showInWebsite="1" sortOrder="20" translate="label">
+                <label>Advanced Options</label>
+                <field id="auto_apply_coupon" translate="label" type="select" showInDefault="1" canRestore="1">
+                    <label>Auto apply coupon code to cart</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="auto_apply_freeproduct" translate="label" type="select" showInDefault="1" canRestore="1">
+                    <label>Auto apply free product to cart</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="custom_price_rule_id" translate="label" type="text" showInDefault="1" showInStore="1" showInWebsite="1" canRestore="1">
+                    <label>Custom Price Rule ID</label>
+                    <comment><![CDATA[
+                        Lootly will utilize this rule ID when generating your coupon codes, overwriting any Lootly conditional logic.
+                        ]]>
+                    </comment>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

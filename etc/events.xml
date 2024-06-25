@@ -1,0 +1,27 @@
+<?xml version="1.0" ?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <event name="sales_order_save_after">
+        <observer instance="Lootly\Lootly\Observer\SalesOrderSaveAfter"
+                  name="lootlylootly_order_save_after"/>
+    </event>
+    <event name="sales_order_invoice_save_after">
+        <observer instance="Lootly\Lootly\Observer\SalesOrderInvoiceSaveAfter"
+                  name="lootlylootly_invoice_save_after"/>
+    </event>
+    <event name="sales_order_shipment_save_after">
+        <observer instance="Lootly\Lootly\Observer\SalesOrderShipmentSaveAfter"
+                  name="lootlylootly_shipment_save_after"/>
+    </event>
+    <event name="sales_order_creditmemo_refund">
+        <observer instance="Lootly\Lootly\Observer\Refund" name="lootlylootly_refund"/>
+    </event>
+    <event name="customer_register_success">
+        <observer instance="Lootly\Lootly\Observer\CustomerRegisterSuccess"
+                  name="lootlylootly_customer_register_success"/>
+    </event>
+    <event name="salesrule_validator_process">
+        <observer instance="Lootly\Lootly\Observer\SalesruleValidatorProcess"
+                  name="lootlylootly_salesrule_validator_process"/>
+    </event>
+</config>

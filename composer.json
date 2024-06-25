@@ -1,0 +1,28 @@
+{
+  "name": "lootly/lootly",
+  "description": "Automatically Collect orders and Display Lootly Company widget.",
+  "type": "magento2-module",
+  "version": "1.1.31",
+  "license": [
+    "OSL-3.0",
+    "AFL-3.0"
+  ],
+  "authors": [
+    {
+      "name": "Lootly",
+      "email": "support@lootly.io"
+    }
+  ],
+  "require": {
+    "magento/framework": ">=100"
+  },
+  "autoload": {
+    "files": [
+      "registration.php"
+    ],
+    "psr-4": {
+      "Lootly\\Lootly\\": ""
+    }
+  }
+}
+

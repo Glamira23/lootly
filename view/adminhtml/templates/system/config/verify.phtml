@@ -1,0 +1,46 @@
+<?php
+/**
+ * Copyright © 2016 MageWorx. All rights reserved.
+ * See LICENSE.txt for license details.
+ */
+?>
+<?php /* @var $block \Lootly\Lootly\Block\Adminhtml\Verify */ ?>
+
+<script>
+    require([
+        'jquery'
+    ], function ($) {
+
+        var verifySpan = $('#verify_span');
+
+        $('#verify_lootly_settings').click(function () {
+            var email = $('#lootlyordernotifier_general_email').val();
+            var apikey = $('#lootlyordernotifier_general_api_key').val();
+            var secret = $('#lootlyordernotifier_general_api_secret').val();
+            var $storeSwitcher = $('#store_switcher');
+            var storeId = '';
+            if ($storeSwitcher.length) {
+                storeId = $('#store_switcher').val();
+            }
+            verifySpan.find('.processing').show();
+            verifySpan.find('.verifyed').hide();
+            var url = '<?= /* @noEscape */ $block->getAjaxUrl() ?>' + 'email/'
+                + encodeURIComponent(email) + '/apikey/' + encodeURIComponent(apikey)
+                + '/secret/' + encodeURIComponent(secret);
+            if (storeId) {
+                url += '/storeid/' + storeId;
+            }
+            window.location.href = url;
+            return false;
+        });
+    });
+</script>
+
+<?= $block->getButtonHtml() ?>
+<span class="verify-indicator" id="verify_span">
+    <img class="processing" hidden="hidden" alt="Verifying" style="margin:0 5px"
+         src="<?= /* @noEscape */  $block->getViewFileUrl('images/process_spinner.gif') ?>"/>
+    <img class="verifyed" hidden="hidden" alt="Verified" style="margin:-3px 5px"
+         src="<?= /* @noEscape */ $block->getViewFileUrl('images/rule_component_apply.gif') ?>"/>
+    <span id="verify_message_span"></span>
+</span>

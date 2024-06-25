@@ -1,0 +1,38 @@
+<?php
+/**
+ * Copyright © 2019 Lootly. All rights reserved.
+ * See LICENSE.txt for license details.
+ */
+?>
+<?php /* @var $block \Lootly\Lootly\Block\Adminhtml\Test */ ?>
+
+
+<img src="https://lootly.io/images/logos/logo-black.png" width="200"/>
+
+<?php if ($block->checkVerify()): ?>
+    <p><?= /* @noEscape */ __('The extension is connected to your Lootly account.'); ?></p>
+    <button type="button"
+            onclick="window.open('<?= /* @escapeNotVerified */ $block->getLoginUrl() ?>')">
+        <?= /* @escapeNotVerified */ __('Go to Lootly'); ?>
+    </button>
+<?php else: ?>
+    <p><?= /* @noEscape */ __('The extension is not connected to a Lootly account.') ?></p>
+    <button type="button"
+            onclick="window.open('<?= /* @noEscape */ $block->getSignupUrl() ?>')">
+        <?= /* @noEscape */ __('Create a Free Account'); ?>
+    </button>
+<?php endif; ?>
+<div style='margin-bottom:18px;'></div>
+<?php if (!function_exists('curl_version')): ?>
+    <div id="messages">
+        <ul class="messages">
+            <li class="error-msg">
+                <ul>
+                    <li><span>Error! <a
+                                href="http://php.net/manual/en/curl.installation.php">curl</a> is not enabled.</span>
+                    </li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+<?php endif; ?>

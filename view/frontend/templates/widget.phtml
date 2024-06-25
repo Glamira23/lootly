@@ -1,0 +1,32 @@
+<?php
+/** @var \Lootly\Lootly\Block\Widget $block */
+
+//$storeId = $block->getStoreId();
+$key = $block->getApiKey();
+$customerId = $block->getCustomerId();
+$secret = $block->getApiSecret();
+$customerSignature = $block->getCustomerSignature();
+$storeUrl = $block->getBaseUrl();
+$storeUrl = str_replace('/index.php/', '/', $storeUrl);
+$shopId = $block->getHash($storeUrl . $secret);
+if ($key): ?>
+    <div data-bind="scope: 'lootlyWidget'" data-role="lootly-widget">
+        <div id="lootly-widget" class="lootly-init" style="display: none"
+             data-provider="https://lootly.io"
+             data-api-key="<?= $escaper->escapeHtml($key) ?>"
+             data-shop-domain="<?= $escaper->escapeHtml($storeUrl) ?>"
+             data-shop-id="<?= $escaper->escapeHtml($shopId) ?>"
+             data-customer-id="<?= $escaper->escapeHtml($customerId) ?>"
+             data-customer-signature="<?= $escaper->escapeHtml($customerSignature) ?>"
+             data-bind="scope: 'lootlyWidget',
+                attr: {'data-customer-id': lootlyWidget().customerId,'data-customer-signature':lootlyWidget().customerSignature},
+                afterRender: loadJsAfterKoRender"
+             data-script-url="<?=
+             /* @escapeNotVerified */ $this->helper(\Lootly\Lootly\Helper\Api::class)->getScriptUrl()?>">
+
+        </div>
+    </div>
+    <script type="text/x-magento-init">
+    {"[data-role=lootly-widget]": {"Magento_Ui/js/core/app": <?= /* @escapeNotVerified */ $block->getJsLayout() ?>}}
+    </script>
+<?php endif;

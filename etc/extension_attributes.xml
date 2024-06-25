@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<config>
+    <extension_attributes for="Magento\Customer\Api\Data\CustomerInterface">
+        <attribute code="lootly_registered" type="string">
+        </attribute>
+    </extension_attributes>
+</config>
