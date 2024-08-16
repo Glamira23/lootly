@@ -45,9 +45,9 @@ class Coupon extends \Magento\Framework\App\Action\Action implements \Magento\Fr
      */
     protected $resultJsonFactory;
     /**
-     * @var \Magento\Catalog\Model\CategoryFactory
+     * @var \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory
      */
-    protected $categoryFactory;
+    protected $categoryCollectionFactory;
     /**
      * @var \Magento\Customer\Api\CustomerRepositoryInterface
      */
@@ -81,6 +81,7 @@ class Coupon extends \Magento\Framework\App\Action\Action implements \Magento\Fr
      */
     protected $toModelConverter;
     protected $moduleList;
+    protected $productCollectionFactory;
 
     /**
      * @param Context $context
@@ -91,14 +92,15 @@ class Coupon extends \Magento\Framework\App\Action\Action implements \Magento\Fr
      * @param \Magento\Customer\Api\GroupRepositoryInterface $groupRepository
      * @param \Magento\Framework\Api\SearchCriteriaBuilder $searchCriteriaBuilder
      * @param \Magento\Framework\Controller\Result\JsonFactory $resultJsonFactory
-     * @param \Magento\Catalog\Model\CategoryFactory $categoryFactory
+     * @param \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory $categoryCollectionFactory
      * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
      * @param \Psr\Log\LoggerInterface $logger
      * @param CartRepositoryInterface $cartRepository
      * @param CartRepositoryInterface $quoteRepository
      * @param \Magento\SalesRule\Api\RuleRepositoryInterface $ruleRepository
      * @param \Magento\SalesRule\Model\Converter\ToDataModel $toDataModelConverter
-     * @param \Magento\SalesRule\Model\Converter\ToModel $toModelConverter
+     * @param \Magento\Framework\Module\ModuleList $moduleList
+     * @param \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory  $productCollectionFactory
      */
     public function __construct(
         Context                                           $context,
@@ -109,7 +111,7 @@ class Coupon extends \Magento\Framework\App\Action\Action implements \Magento\Fr
         \Magento\Customer\Api\GroupRepositoryInterface    $groupRepository,
         \Magento\Framework\Api\SearchCriteriaBuilder      $searchCriteriaBuilder,
         \Magento\Framework\Controller\Result\JsonFactory  $resultJsonFactory,
-        \Magento\Catalog\Model\CategoryFactory            $categoryFactory,
+        \Magento\Catalog\Model\ResourceModel\Category\CollectionFactory  $categoryCollectionFactory,
         \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository,
         \Psr\Log\LoggerInterface                          $logger,
         CartRepositoryInterface                           $cartRepository,
@@ -117,7 +119,8 @@ class Coupon extends \Magento\Framework\App\Action\Action implements \Magento\Fr
         \Magento\SalesRule\Api\RuleRepositoryInterface    $ruleRepository,
         \Magento\SalesRule\Model\Converter\ToDataModel    $toDataModelConverter,
         \Magento\SalesRule\Model\Converter\ToModel        $toModelConverter,
-        \Magento\Framework\Module\ModuleList $moduleList
+        \Magento\Framework\Module\ModuleList $moduleList,
+        \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory             $productCollectionFactory
     ) {
         $this->ruleFactory = $ruleFactory;
         $this->productFactory = $productFactory;
@@ -126,7 +129,7 @@ class Coupon extends \Magento\Framework\App\Action\Action implements \Magento\Fr
         $this->groupRepository = $groupRepository;
         $this->searchCriteriaBuilder = $searchCriteriaBuilder;
         $this->resultJsonFactory = $resultJsonFactory;
-        $this->categoryFactory = $categoryFactory;
+        $this->categoryCollectionFactory = $categoryCollectionFactory;
         $this->customerRepository = $customerRepository;
         $this->logger = $logger;
         $this->cartRepository = $cartRepository;
@@ -135,6 +138,7 @@ class Coupon extends \Magento\Framework\App\Action\Action implements \Magento\Fr
         $this->toDataModelConverter = $toDataModelConverter;
         $this->toModelConverter = $toModelConverter;
         $this->moduleList = $moduleList;
+        $this->productCollectionFactory = $productCollectionFactory;
         parent::__construct($context);
     }
 
@@ -202,8 +206,7 @@ class Coupon extends \Magento\Framework\App\Action\Action implements \Magento\Fr
             ];
             return $result;
         }
-        $product = $this->productFactory->create();
-        $collection = $product->getCollection();
+        $collection = $this->productCollectionFactory->create();
         $collection->addAttributeToFilter([
             ['attribute' => 'name', 'like' => '%' . $q . '%'],
             ['attribute' => 'entity_id', 'like' => '%' . $q . '%']
@@ -243,8 +246,7 @@ class Coupon extends \Magento\Framework\App\Action\Action implements \Magento\Fr
             ];
             return $result;
         }
-        $category = $this->categoryFactory->create();
-        $collection = $category->getCollection();
+        $collection = $this->categoryCollectionFactory->create();
         $collection->addAttributeToFilter([
             ['attribute' => 'name', 'like' => '%' . $q . '%'],
             ['attribute' => 'entity_id', 'like' => '%' . $q . '%']

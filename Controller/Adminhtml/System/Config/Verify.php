@@ -78,6 +78,7 @@ class Verify extends \Magento\Backend\App\Action
         $key = $this->request->getParam('apikey');
         $secret = $this->request->getParam('secret');
         $storeId = $this->request->getParam('storeid');
+        $websiteId = $this->request->getParam('websiteid');
         $data = [
             'email' => $email,
             'key' => $key,
@@ -93,8 +94,13 @@ class Verify extends \Magento\Backend\App\Action
             if ($storeId) {
                 $scope = 'store';
             } else {
-                $scope = 'default';
-                $storeId = 0;
+                if ($websiteId) {
+                    $scope = 'websites';
+                    $storeId = $websiteId;
+                } else {
+                    $scope = 'default';
+                    $storeId = 0;
+                }
             }
             $this->_resourceConfig->saveConfig(
                 'lootlyordernotifier/general/email',
@@ -122,7 +128,7 @@ class Verify extends \Magento\Backend\App\Action
             foreach ($this->cacheFrontendPool as $cacheFrontend) {
                 $cacheFrontend->getBackend()->clean();
             }
-            $_helper->installApp($key, $secret);
+            $_helper->installApp($key, $secret, $storeId, $scope);
 
             $this->messageManager->addSuccess('The extension is connected to your Lootly account.');
         } else {

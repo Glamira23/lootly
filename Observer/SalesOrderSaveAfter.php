@@ -52,8 +52,11 @@ class SalesOrderSaveAfter implements \Magento\Framework\Event\ObserverInterface
             $this->orderNotifierApiHelper->sendToApi($order, $order->getState());
         }
 
-        if (in_array($order->getStatus(),['refund','canceled'])) {
+        if (in_array(strtolower($order->getStatus()),['refund','canceled'])) {
             $this->orderNotifierApiHelper->processCanceled($order);
+        }
+        if (in_array(strtolower($order->getStatus()),['refund', 'closed'])) {
+            $this->orderNotifierApiHelper->processClosed($order);
         }
 
         return $this;

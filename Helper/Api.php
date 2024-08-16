@@ -68,6 +68,7 @@ class Api extends \Lootly\Lootly\Helper\Data
      */
     public const CANCELED_URL = '/integrations/webhooks/magento/orders-cancelled';
 
+    public const CLOSED_URL = '/integrations/webhooks/magento/orders-closed';
     /**
      *
      */
@@ -178,7 +179,15 @@ class Api extends \Lootly\Lootly\Helper\Data
     {
         return self::getLiveTestUrl() . self::CANCELED_URL;
     }
-
+    /**
+     * Closed Url
+     *
+     * @return string
+     */
+    public function getClosedURL()
+    {
+        return self::getLiveTestUrl() . self::CLOSED_URL;
+    }
     /**
      * Script Url
      *
@@ -235,8 +244,15 @@ class Api extends \Lootly\Lootly\Helper\Data
     public function installApp($apiKey, $apiSecret)
     {
         $storeIds = [];
-        $stores = $this->storeManager->getStores();
-        $installedUrl = $this->storeManager->getStore()->getBaseUrl();
+
+        if ($scope=='websites') {
+            $stores = $this->storeManager->getWebsite($storeId)->getStores();
+            $store = reset($stores);
+            $installedUrl = $store->getBaseUrl();
+        } else {
+            $stores = $this->storeManager->getStores();
+            $installedUrl = $this->storeManager->getStore($storeId)->getBaseUrl();
+        }
         foreach ($stores as $store) {
             $key = $this->getApiKey($store->getId());
             if ($apiKey==$key || !$installedUrl) {
@@ -244,10 +260,10 @@ class Api extends \Lootly\Lootly\Helper\Data
                 break;
             }
         }
-        $installedUrl = str_replace('/index.php/', '/', $installedUrl);
+        $shopUrl = str_replace('/index.php/', '/', $installedUrl);
         $requestParams = [
-            "shop_url" => $installedUrl,
-            "api_endpoint" => $this->_getUrl('lootly/create_coupon/index', ['_nosid' => true]),
+            "shop_url" => $shopUrl,
+            "api_endpoint" => $installedUrl.'lootly/create_coupon/index',
             "key" => $apiKey,
         ];
         ksort($requestParams);
@@ -429,13 +445,24 @@ class Api extends \Lootly\Lootly\Helper\Data
         }
     }
 
+    public function processCanceled($order)
+    {
+        $url = $this->getCanceledURL();
+        $this->processRefundPoints($order, $url);
+    }
+
+    public function processClosed($order)
+    {
+        $url = $this->getClosedURL();
+        $this->processRefundPoints($order, $url);
+    }
     /**
      * Process canceled
      *
      * @param \Magento\Sales\Model\Order $order
      * @return void
      */
-    public function processCanceled($order)
+    public function processRefundPoints($order, $url)
     {
         /** @var \Magento\Sales\Model\Order $order */
         $storeId = $order->getStoreId();
@@ -448,7 +475,7 @@ class Api extends \Lootly\Lootly\Helper\Data
         ksort($apiData);
         $apiData["hmac"] = base64_encode(hash_hmac('sha256', json_encode($apiData), $secretKey, true));
 
-        $url = $this->getCanceledURL();
+
         $result = $this->call($apiData, $url);
     }
 }

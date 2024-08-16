@@ -42,7 +42,7 @@ class Data extends \Magento\Framework\App\Helper\AbstractHelper
     /**
      * @var \Magento\Store\Model\StoreManagerInterface
      */
-    protected $storeManager;
+    public $storeManager;
     /**
      * @var \Magento\Customer\Api\CustomerRepositoryInterface
      */

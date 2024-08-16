@@ -18,9 +18,14 @@
             var apikey = $('#lootlyordernotifier_general_api_key').val();
             var secret = $('#lootlyordernotifier_general_api_secret').val();
             var $storeSwitcher = $('#store_switcher');
+            var $websiteSwitcher = $('#website_switcher');
             var storeId = '';
+            var websiteId = '';
             if ($storeSwitcher.length) {
-                storeId = $('#store_switcher').val();
+                storeId = $storeSwitcher.val();
+            }
+            if ($websiteSwitcher.length) {
+                websiteId = $websiteSwitcher.val();
             }
             verifySpan.find('.processing').show();
             verifySpan.find('.verifyed').hide();
@@ -29,6 +34,9 @@
                 + '/secret/' + encodeURIComponent(secret);
             if (storeId) {
                 url += '/storeid/' + storeId;
+            }
+            if (websiteId) {
+                url += '/websiteid/' + websiteId;
             }
             window.location.href = url;
             return false;
