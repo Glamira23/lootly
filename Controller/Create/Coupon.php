@@ -212,7 +212,7 @@ class Coupon extends \Magento\Framework\App\Action\Action implements \Magento\Fr
             ['attribute' => 'entity_id', 'like' => '%' . $q . '%']
         ]);
         $collection->addAttributeToFilter('status', ['eq' => '1']);
-        $collection->addAttributeToSelect('price','name');
+        $collection->addAttributeToSelect(['price','name']);
         $products = [];
         /** @var \Magento\Catalog\Model\Product $product */
         foreach ($collection as $product) {
