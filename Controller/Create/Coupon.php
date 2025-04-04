@@ -167,6 +167,9 @@ class Coupon extends \Magento\Framework\App\Action\Action implements \Magento\Fr
                 $data = $this->_createCoupon();
             } elseif (isset($postdata1['customer']) && $postdata1['customer'] == 'info') {
                 $data = $this->_customerRequest();
+            } elseif (isset($postdata1['customer-update'])
+                  || (isset($postdata1['customer']) && $postdata1['customer'] == 'update')) {
+                $data = $this->_customerUpdateRequest();
             } elseif (isset($postdata1['version'])) {
                 $data = $this->moduleList->getOne('Lootly_Lootly');
                 $data = $data['setup_version'];
@@ -689,6 +692,39 @@ class Coupon extends \Magento\Framework\App\Action\Action implements \Magento\Fr
             return $customerData;
         } catch (\Exception $e) {
             return ['error' => 'not_found', 'details' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Get customer Request
+     *
+     * @return array|string[]
+     */
+    protected function _customerUpdateRequest()
+    {
+        /** @var \Magento\Customer\Model\Customer $customer */
+        if (!$this->_validateHash()) {
+            return ['error' => 'Invalid Hmac'];
+        }
+        try {
+            $postdata = $this->_getRequestData();
+            $customerId = '';
+            if (isset($postdata['customer_id'])) {
+                $customerId = $postdata['customer_id'];
+            } elseif (isset($postdata['customerId'])) {
+                $customerId = $postdata['customerId'];
+            }
+            $customer = $this->customerRepository->getById($customerId);
+            $currentDob = $customer->getDob();
+            if (isset($postdata['dob']) && !$currentDob) {
+                $currentDob = $postdata['dob'];
+                $customer->setDob($postdata['dob']);
+                $this->customerRepository->save($customer);
+            }
+
+            return ['customerId' => $customerId, 'dob' => $currentDob, 'saved' => true];
+        } catch (\Exception $e) {
+            return ['error' => true, 'details' => $e->getMessage()];
         }
     }
 }

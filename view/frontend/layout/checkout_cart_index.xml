@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <referenceContainer name="cart.summary">
+            <block class="Lootly\Lootly\Block\Widget" name="checkout.cart.order.actions.lootly_redeem" template="Lootly_Lootly::cart/widget.phtml" cacheable="false" after="-">
+
+            </block>
+        </referenceContainer>
+    </body>
+</page>

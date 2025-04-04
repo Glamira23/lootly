@@ -3,13 +3,32 @@
 namespace Lootly\Lootly\Block;
 
 use Magento\Framework\View\Element\Template;
-
+use Magento\Checkout\Model\Cart;
 /**
  * Lootly_Lootly Adminhtml Block for Verify Settings
  *
  */
 class Widget extends \Magento\Framework\View\Element\Template
 {
+    public $api;
+
+    protected $formKey;
+    protected $cart;
+
+    public function __construct(
+        Template\Context $context,
+        \Lootly\Lootly\Helper\Api $api,
+        \Magento\Framework\Data\Form\FormKey $formKey,
+        Cart $cart,
+        array $data = []
+    )
+    {
+        $this->api = $api;
+        $this->formKey = $formKey;
+        $this->cart = $cart;
+        parent::__construct($context, $data);
+    }
+
     /**
      * GetStoreId
      *
@@ -100,5 +119,24 @@ class Widget extends \Magento\Framework\View\Element\Template
         $MD5Source = $objectManager->get('\Lootly\Lootly\Helper\MD5Source');
         $hash = $MD5Source->md($string);
         return $hash;
+    }
+    public function getRewardList($storeId = null)
+    {
+        $rewardsListData = $this->api->getRewardsList($storeId);
+        if (isset($rewardsListData['data'])) {
+            return $rewardsListData['data'];
+        } else {
+            return [];
+        }
+    }
+    public function getCustomerData($storeId = null){
+        return $this->api->getCustomer($this->getCustomerId());
+    }
+    public function getFormKey()
+    {
+        return $this->formKey->getFormKey();
+    }
+    public function getCartAmount(){
+        return $this->cart->getQuote()->getSubtotal();
     }
 }

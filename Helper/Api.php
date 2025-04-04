@@ -69,9 +69,11 @@ class Api extends \Lootly\Lootly\Helper\Data
     public const CANCELED_URL = '/integrations/webhooks/magento/orders-cancelled';
 
     public const CLOSED_URL = '/integrations/webhooks/magento/orders-closed';
-    /**
-     *
-     */
+
+    public const REWARDLIST_URL = '/integrations/webhooks/common/rewards-list';
+    public const COMMONCUSTOMER_URL = '/integrations/webhooks/common/customer';
+    public const REDEEMREWARD_URL = '/integrations/webhooks/common/redeem-reward';
+
     public const FRONTSCRIPT_URL = '/js/integrations/shopify/script.js?shop=';
 
     /**
@@ -241,7 +243,7 @@ class Api extends \Lootly\Lootly\Helper\Data
      * @return void
      * @throws \Magento\Framework\Exception\NoSuchEntityException
      */
-    public function installApp($apiKey, $apiSecret)
+    public function installApp($apiKey, $apiSecret, $storeId, $scope)
     {
         $storeIds = [];
 
@@ -267,6 +269,9 @@ class Api extends \Lootly\Lootly\Helper\Data
             "key" => $apiKey,
         ];
         ksort($requestParams);
+        if (!$apiSecret) {
+            $apiSecret = '';
+        }
         $requestParams["hmac"] = base64_encode(hash_hmac('sha256', json_encode($requestParams), $apiSecret, true));
         $this->call($requestParams, $this->getAppInstallURL());
     }
@@ -298,7 +303,7 @@ class Api extends \Lootly\Lootly\Helper\Data
         curl_close($curl);
         $this->_logger->debug($result);
         if (in_array($responseInfo['http_code'], ['200', '201'])) {
-            $res = ['status' => 1];
+            $res = ['status' => 1, 'response' => $result];
         } else {
             $res = ['status' => 0];
         }
@@ -314,134 +319,138 @@ class Api extends \Lootly\Lootly\Helper\Data
      */
     public function sendToApi($order, $targetStatus = null)
     {
-        $storeId = $order->getStoreId();
-        $model = $this->orderNotifierEntryFactory->create();
-        $entries = $model->getCollection()->addFieldToFilter('order_id', $order->getIncrementId());
-        if ($entries->getSize() <= 0) {
-            $orderId = $order->getIncrementId();
-            $secretKey = $this->getApiSecret($storeId);
+        try {
+            $storeId = $order->getStoreId();
+            $model = $this->orderNotifierEntryFactory->create();
+            $entries = $model->getCollection()->addFieldToFilter('order_id', $order->getIncrementId());
+            if ($entries->getSize() <= 0) {
+                $orderId = $order->getIncrementId();
+                $secretKey = $this->getApiSecret($storeId);
 
-            /* Get Order Total, Shipping country, zipcode, Order Coupon code */
-            $orderTotal = $order->getBaseGrandTotal();
-            $_shippingAddress = $order->getShippingAddress();
-            $shippingZipcode = $_shippingAddress->getPostcode();
-            $shippingCountry = $_shippingAddress->getCountryId();
-            $taxAmount = $order->getTaxAmount();
-            $couponCode = $order->getCouponCode();
-            $discount_codes = [];
-            if ($couponCode) {
-                $discount_codes[] = ['code' => $couponCode];
-            }
-            $customerId = $order->getCustomerId();
-            if (!$customerId) {
-                $websiteId = $order->getStore()->getWebsite()->getId();
-                try {
-                    $customer = $this->customerRepository->get($order->getCustomerEmail(), $websiteId);
-                    $customerId = $customer->getId();
-                } catch (\Exception $e) {
-                    $customerId = null;
+                /* Get Order Total, Shipping country, zipcode, Order Coupon code */
+                $orderTotal = $order->getBaseGrandTotal();
+                $taxAmount = $order->getTaxAmount();
+                $couponCode = $order->getCouponCode();
+                $discount_codes = [];
+                if ($couponCode) {
+                    $discount_codes[] = ['code' => $couponCode];
                 }
-            }
-            $customerInfo = [
-                'email' => $order->getCustomerEmail()
-            ];
-            $firstname = $order->getCustomerFirstname();
-            if ($firstname) {
-                $customerInfo['first_name'] = $firstname;
-            } else {
-                $customerInfo['first_name'] = $order->getBillingAddress()->getFirstname();
-            }
-            $last_name = $order->getCustomerLastname();
-            if ($last_name) {
-                $customerInfo['last_name'] = $last_name;
-            } else {
-                $customerInfo['last_name'] = $order->getBillingAddress()->getLastname();
-            }
-            if ($customerId) {
-                $customerInfo['id'] = $customerId;
-                $address = $order->getShippingAddress();
-                if ($address && $address->getId()) {
-                    $customerInfo['default_address'] = [
-                        'zip' => $address->getPostcode(),
-                        'country' => $address->getCountryId()
-                    ];
+                $customerId = $order->getCustomerId();
+                if (!$customerId) {
+                    $websiteId = $order->getStore()->getWebsite()->getId();
+                    try {
+                        $customer = $this->customerRepository->get($order->getCustomerEmail(), $websiteId);
+                        $customerId = $customer->getId();
+                    } catch (\Exception $e) {
+                        $customerId = null;
+                    }
                 }
-            }
-            $customerDob = $order->getCustomerDob();
-            if ($customerDob && $customerDob != '0000-00-00 00:00:00' && $customerDob != '0000-00-00') {
-                $customerInfo['birthday'] = $customerDob;
-            }
-            $discount = abs($order->getDiscountAmount());
-            $subtotal = $order->getSubtotal() - $discount;
-            $productsData = [];
-            $guest = $order->getCustomerIsGuest();
-            foreach ($order->getAllVisibleItems() as $item) {
-                /** @var \Magento\Catalog\Model\Product $product */
-                $product = $item->getProduct();
-                if ($product === null) {
-                    continue;
-                }
-                $categories = [];
-                $cats = $product->getCategoryCollection();
-                $cats->addAttributeToSelect('name');
-                foreach ($cats as $category) {
-                    $categories[] = [
-                        'category_name' => $category->getName(),
-                        'category_id' => $category->getId()
-                    ];
-                }
-                $productData = [];
-                $productData['product_id'] = $item->getProductId();
-                $productData['product_name'] = $item->getName();
-                $productData['product_price'] = $item->getBasePrice();
-                $productData['quantity'] = $item->getQtyOrdered();
-                $productData['categories'] = $categories;
-                $productData['applied_rule_ids'] = $item->getAppliedRuleIds();
-                $productsData[] = $productData;
-            }
-
-            $apiData = [
-                "id" => $order->getIncrementId(),
-                'total_price' => number_format($orderTotal, 2, '.', ''),
-                'total_tax' => number_format($taxAmount, 2, '.', ''),
-                'total_discounts' => number_format($discount, 2, '.', ''),
-                'subtotal_price' => number_format($subtotal, 2, '.', ''),
-                'taxes_included' => '0',
-                'discount_codes' => $discount_codes,
-                'customer' => $customerInfo,
-                "key" => $this->getApiKey($storeId),
-                "products" => $productsData,
-                'ip_address' => $order->getRemoteIp(),
-                'guest' => $guest
-            ];
-            /* Pass Coupon code to the API call If coupon code was used */
-            if (!empty($couponCode)) {
-                $apiData['coupon_code'] = $couponCode;
-            }
-
-            ksort($apiData);
-            $apiData["hmac"] = base64_encode(hash_hmac('sha256', json_encode($apiData), $secretKey, true));
-
-            $url = $this->getOrderProcessingURL();
-            if ($targetStatus == 'shipped') {
-                $url = $this->getOrderShippedURL();
-            } elseif ($targetStatus == 'invoiced') {
-                $url = $this->getOrderPaidURL();
-            } elseif ($targetStatus == 'complete') {
-                $url = $this->getOrderCompletedURL();
-            }
-            $result = $this->call($apiData, $url);
-
-            if ($result['status'] == '1') {
-                /*Mage::getSingleton('adminhtml/session')->addSuccess('Order info has been sent to Lootly.');*/
-                $data = [
-                    'order_id' => $order->getIncrementId()
+                $customerInfo = [
+                    'email' => $order->getCustomerEmail()
                 ];
-                $model->setData($data);
-                $model->save();
-            } /*else {
+                $firstname = $order->getCustomerFirstname();
+                if ($firstname) {
+                    $customerInfo['first_name'] = $firstname;
+                } else {
+                    $customerInfo['first_name'] = $order->getBillingAddress()->getFirstname();
+                }
+                $last_name = $order->getCustomerLastname();
+                if ($last_name) {
+                    $customerInfo['last_name'] = $last_name;
+                } else {
+                    $customerInfo['last_name'] = $order->getBillingAddress()->getLastname();
+                }
+                if ($customerId) {
+                    $customerInfo['id'] = $customerId;
+                    $address = $order->getShippingAddress();
+                    if ($address && $address->getId()) {
+                        $customerInfo['default_address'] = [
+                            'zip' => $address->getPostcode(),
+                            'country' => $address->getCountryId()
+                        ];
+                    }
+                }
+                $customerDob = $order->getCustomerDob();
+                if ($customerDob && $customerDob != '0000-00-00 00:00:00' && $customerDob != '0000-00-00') {
+                    $customerInfo['birthday'] = $customerDob;
+                }
+                $discount = abs($order->getDiscountAmount());
+                $subtotal = $order->getSubtotal() - $discount;
+                $productsData = [];
+                $guest = $order->getCustomerIsGuest();
+                foreach ($order->getAllVisibleItems() as $item) {
+                    /** @var \Magento\Catalog\Model\Product $product */
+                    $product = $item->getProduct();
+                    if ($product === null) {
+                        continue;
+                    }
+                    $categories = [];
+                    $cats = $product->getCategoryCollection();
+                    $cats->addAttributeToSelect('name');
+                    foreach ($cats as $category) {
+                        $categories[] = [
+                            'category_name' => $category->getName(),
+                            'category_id' => $category->getId()
+                        ];
+                    }
+                    $productData = [];
+                    $productData['product_id'] = $item->getProductId();
+                    $productData['product_name'] = $item->getName();
+                    $productData['product_price'] = $item->getBasePrice();
+                    $productData['quantity'] = $item->getQtyOrdered();
+                    $productData['categories'] = $categories;
+                    $productData['applied_rule_ids'] = $item->getAppliedRuleIds();
+                    $productData['variantID'] = $product->getData('variantID');
+                    $productData['item_spent_amount'] = $item->getBasePrice() - $item->getBaseDiscountAmount();
+                    $productData['erp_sku'] = $item->getData('erp_sku');
+                    $productsData[] = $productData;
+                }
+
+                $apiData = [
+                    "id" => $order->getIncrementId(),
+                    'total_price' => number_format($orderTotal, 2, '.', ''),
+                    'total_tax' => number_format($taxAmount, 2, '.', ''),
+                    'total_discounts' => number_format($discount, 2, '.', ''),
+                    'subtotal_price' => number_format($subtotal, 2, '.', ''),
+                    'taxes_included' => '0',
+                    'discount_codes' => $discount_codes,
+                    'customer' => $customerInfo,
+                    "key" => $this->getApiKey($storeId),
+                    "products" => $productsData,
+                    'ip_address' => $order->getRemoteIp(),
+                    'guest' => $guest
+                ];
+                /* Pass Coupon code to the API call If coupon code was used */
+                if (!empty($couponCode)) {
+                    $apiData['coupon_code'] = $couponCode;
+                }
+
+                ksort($apiData);
+                $apiData["hmac"] = base64_encode(hash_hmac('sha256', json_encode($apiData), $secretKey, true));
+
+                $url = $this->getOrderProcessingURL();
+                if ($targetStatus == 'shipped') {
+                    $url = $this->getOrderShippedURL();
+                } elseif ($targetStatus == 'invoiced') {
+                    $url = $this->getOrderPaidURL();
+                } elseif ($targetStatus == 'complete') {
+                    $url = $this->getOrderCompletedURL();
+                }
+                $result = $this->call($apiData, $url);
+
+                if ($result['status'] == '1') {
+                    /*Mage::getSingleton('adminhtml/session')->addSuccess('Order info has been sent to Lootly.');*/
+                    $data = [
+                        'order_id' => $order->getIncrementId()
+                    ];
+                    $model->setData($data);
+                    $model->save();
+                } /*else {
                 Mage::getSingleton('adminhtml/session')->addError('Error! Order info was not sent to Lootly.');
             }*/
+            }
+        } catch (\Exception $e){
+            $this->_logger->error($e->getMessage());
         }
     }
 
@@ -477,5 +486,61 @@ class Api extends \Lootly\Lootly\Helper\Data
 
 
         $result = $this->call($apiData, $url);
+    }
+    public function getRewardsList($storeId = null)
+    {
+        $data = [
+            'key' => $this->getApiKey($storeId),
+            't' => time(),
+        ];
+        $data['hmac'] = $this->createHMAC($data, $storeId);
+
+        $result = $this->call($data, $this->getLiveTestUrl() . self::REWARDLIST_URL);
+
+        if ($result['status']=='1'){
+            return json_decode($result['response'],true);
+        } else return false;
+
+    }
+    public function createHMAC($data, $storeId = null)
+    {
+        $secretKey = $this->getApiSecret($storeId);
+
+        ksort($data);
+        return base64_encode(hash_hmac('sha256', json_encode($data), $secretKey, true));
+    }
+
+    public function getCustomer($customerId, $storeId = null)
+    {
+        $data = [
+            'customer_id' => $customerId,
+            'key' => $this->getApiKey($storeId),
+            't' => time(),
+        ];
+        $data['hmac'] = $this->createHMAC($data);
+
+        $result = $this->call($data, $this->getLiveTestUrl() . self::COMMONCUSTOMER_URL);
+
+        if ($result['status'] == '1') {
+            return json_decode($result['response'], true);
+        } else return false;
+
+    }
+
+    public function redeemReward($reward_id, $customer_email)
+    {
+        $data = [
+            'customer_email' => $customer_email,
+            'reward_id' => $reward_id,
+            'key' => $this->getApiKey(),
+            't' => time(),
+        ];
+        $data['hmac'] = $this->createHMAC($data);
+
+        $result = $this->call($data, $this->getLiveTestUrl() . self::REDEEMREWARD_URL);
+
+        if ($result['status'] == '1') {
+            return json_decode($result['response'], true);
+        } else return false;
     }
 }

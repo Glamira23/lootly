@@ -19,6 +19,9 @@ class CsrfValidatorSkip
         $action
     ) {
         if ($request->getModuleName() == 'lootly') {
+            if ($request->getControllerName()=='create' && $request->getActionName()){
+                return $proceed($request, $action);
+            }
             return; // Skip CSRF check
         }
         return $proceed($request, $action); // Proceed Magento 2 core functionalities

@@ -2,7 +2,7 @@
   "name": "lootly/lootly",
   "description": "Automatically Collect orders and Display Lootly Company widget.",
   "type": "magento2-module",
-  "version": "1.1.36",
+  "version": "1.1.42",
   "license": [
     "OSL-3.0",
     "AFL-3.0"

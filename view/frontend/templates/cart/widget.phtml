@@ -1,0 +1,139 @@
+<?php
+/** @var \Lootly\Lootly\Block\Widget $block */
+
+$storeId = $block->getStoreId();
+$key = $block->getApiKey();
+$customerId = $block->getCustomerId();
+if ($customerId) {
+    $customerData = $block->getCustomerData($storeId);
+}
+if ($customerId && isset($customerData['data'])):
+
+    $points = $customerData['data']['points'];
+    $selectOptions = '';
+    $cartAmount = $block->getCartAmount();
+    foreach ($block->getRewardList($storeId) as $reward) {
+        if ($reward['points_required'] <= $points
+            && $cartAmount >= $reward['minimum_order_amount']) {
+            $selectOptions .= '<option data-value="' . $reward['reward_id'] . '" data-points-required="' . $reward['points_required'] . '" data-option="' . $reward['reward_name'] . '">' . $reward['reward_name'] . '(' . $reward['points_required'] . ' points)</option>';
+        }
+    }
+    $endpoint = $this->getUrl('lootly/redeem');
+    if ($selectOptions):
+        $selectDiscount = __('Select a discount');
+        $selectOptions = '<option>' . $selectDiscount . '</option>' . $selectOptions;
+        ?>
+        <div class="lootly-reward-redemption-wrapper">
+            <div class="lootly-variable-reward-block">
+                <div class="lootly-variable-reward-box">
+                    <div class="lootly-reward-slider">
+                        <div class="redeem-points">
+                            <?php echo __('Redeem your Points'); ?>
+                        </div>
+                        <div>
+                            <?php echo __('You have <span class="lootly-redeem-points">%1</span> Points to redeem for a discount on this order.', $points) ?>
+                        </div>
+                        <div>
+                            <select name="reward" id="selected_reward">
+                                <?php echo $selectOptions ?>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="lootly-reward-message lootly-reward-success" style="display:none;">
+                        <p><?php echo __('Your discount has been applied!') ?></p>
+                    </div>
+                    <div class="lootly-reward-message lootly-reward-failed" style="display:none;">
+                        <p>
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle;">
+                                <path fill-rule="evenodd" clip-rule="evenodd" d="M1 21h22L12 2 1 21zm12-3h-2v2h2v-2zm0-8h-2v6h2v-6z" fill="red"/>
+                            </svg>
+                            <span><?php echo __('Redemption failed, please try again!') ?></span>
+                        </p>
+                    </div>
+                    <div class="lootly-reward-message lootly-reward-failed-custom" style="display:none;">
+                        <p></p>
+                    </div>
+                </div>
+                <div class="redeem-points-button-wrapper">
+                    <button type="button" id="redeem_button" data-target="<?php echo $endpoint ?>"
+                            style="display:none;">
+                        <span><?php echo __('Redeem') ?></span>
+                        <span class="selected"></span>
+                    </button>
+                </div>
+            </div>
+            <script>
+                require(['jquery', 'domReady!'], function ($) {
+                    jQuery(document).on('change', '#selected_reward', function () {
+                        var reward = jQuery('#selected_reward option:selected').data('value');
+                        if (reward) {
+                            jQuery('#redeem_button span.selected').text(jQuery('#selected_reward option:selected').data('option'));
+                            jQuery('#redeem_button').show();
+                        } else {
+                            jQuery('#redeem_button').hide();
+                        }
+                    });
+                    jQuery(document).on('click', '#redeem_button', function () {
+                        var reward = jQuery('#selected_reward option:selected').data('value');
+                        if (!reward) {
+                            return false;
+                        }
+                        var data = {
+                            'reward': reward,
+                            'form_key': '<?php echo $block->getFormKey()?>'
+                        }
+                        jQuery('#redeem_button').hide();
+                        jQuery('.lootly-reward-message').hide();
+                        jQuery.ajax({
+                            'url': '<?php echo $block->getUrl('lootly/create/redeem')?>',
+                            'type': 'POST',
+                            'data': JSON.stringify(data),
+                            'headers': {
+                                'Content-Type': 'application/json'
+                            },
+                            success: function (response) {
+                                if (response['success'] == true) {
+                                    jQuery('.lootly-reward-success').show();
+                                    setTimeout(function () {
+                                        location.reload();
+                                    }, 1000);
+                                } else {
+                                    if (response.message) {
+                                        jQuery('.lootly-reward-failed-custom p').text(response.message);
+                                        jQuery('.lootly-reward-failed-custom').show();
+                                    } else {
+                                        jQuery('.lootly-reward-failed').show();
+                                    }
+                                }
+                            },
+                            error: function () {
+                                jQuery('.lootly-reward-failed').show();
+                                setTimeout(function () {
+                                    jQuery('#redeem_button').show();
+                                }, 1000);
+                            }
+                        });
+                        return false;
+                    });
+                });
+            </script>
+        </div>
+    <?php endif;
+else:
+    $loginText = __('<a href="%1">Log in</a> to view your points balance and discover rewards available for redemption', $this->getUrl('customer/account'));
+    ?>
+    <div class="lootly-reward-redemption-wrapper">
+        <div class="lootly-variable-reward-block">
+            <div class="lootly-variable-reward-box">
+                <div class="lootly-reward-slider">
+                    <div class="redeem-points">
+                        <?php echo __('Redeem your Points') ?>
+                    </div>
+                    <div>
+                        <?php echo $loginText ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+<?php endif;

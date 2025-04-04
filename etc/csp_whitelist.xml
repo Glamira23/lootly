@@ -23,5 +23,10 @@
                     <value id="lootly_io" type="host">lootly.io</value>
                 </values>
             </policy>
+            <policy id="frame-ancestors">
+                <values>
+                    <value id="lootly_io" type="host">lootly.io</value>
+                </values>
+            </policy>
         </policies>
 </csp_whitelist>

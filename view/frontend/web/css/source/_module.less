@@ -1,0 +1,69 @@
+//
+//  Common
+//  ---------------------------------------------
+
+& when (@media-common = true) {
+    .lootly-reward-redemption-wrapper{
+        clear:both;
+        float:left;
+        width: 75%;
+        box-sizing: border-box;
+        padding-right: 4%;
+    }
+    .lootly-reward-redemption-wrapper .lootly-variable-reward-block {
+        border:1px solid transparent;
+        border-radius: 10px;
+        box-shadow: 0 0 10px 0 rgba(0,0,0,.09);
+        padding: 20px;
+        max-width: 300px;
+        margin: 0 auto;
+    }
+    .lootly-reward-redemption-wrapper .redeem-points{
+        font-size: 120%;
+        font-weight: bold;
+    }
+    .lootly-reward-redemption-wrapper #selected_reward{
+        width: 100%;
+        padding: 10px;
+        border-radius: 10px;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background: url('@{baseDir}Lootly_Lootly::images/arrow.svg') no-repeat right 10px center;
+        margin-bottom: 10px;
+        margin-top:10px;
+        padding-right: 32px;
+        line-height: 1.8;
+        height: auto;
+    }
+    .lootly-reward-redemption-wrapper #selected_reward option{
+        padding: 5px;
+    }
+    .lootly-reward-redemption-wrapper #redeem_button{
+        width: 100%;
+        padding: 10px;
+        border-radius: 10px;
+        background: rgb(43, 105, 209);
+        color:#fff;
+        border: none;
+        font-weight: bold;
+        line-height: 1.8;
+    }
+    .lootly-reward-redemption-wrapper .lootly-reward-success{
+        color: #028b10;
+    }
+    .lootly-reward-redemption-wrapper .lootly-reward-failed,
+    .lootly-reward-redemption-wrapper .lootly-reward-failed-custom{
+        color: #e81515;
+    }
+    .cart-summary .lootly-reward-redemption-wrapper{
+        margin-top: 10px;
+        width: auto;
+        padding: 10px 0 0 0;
+        border-top: 1px solid #ccc;
+        .lootly-variable-reward-block{
+            padding: 0;
+            box-shadow: none;
+        }
+    }
+}

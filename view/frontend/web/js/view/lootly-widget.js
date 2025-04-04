@@ -21,38 +21,41 @@ define([
             this._super();
             this.lootlyWidget = customerData.get('lootly-widget');
             that = this;
+            this.lootlyWidget.subscribe(function (newValue) {
+                var c = that.isCorrectlyRendered();
+                if (!c) {
+                    var scriptUrl = $('#lootly-widget').data('script-url');
+                    scriptUrl += '#renew';
+                    $('#lootly-widget').data('script-url', scriptUrl);
+                    $('#lootly-widget').empty();
+                    lootlyJsInitialized = false;
+                    that.initializeLootlyJs();
+                }
+            });
             window.addEventListener('widgetRewardRedeemed', (event) => {
                 var sections = ['cart'];
                 customerData.invalidate(sections);
                 customerData.reload(sections, true);
             });
         },
-        loadJsAfterKoRender:function(){
-            that.waitForCorrectRender();
+        loadJsAfterKoRender: function () {
+            that.initializeLootlyJs();
         },
         initializeLootlyJs: function () {
-            if (!lootlyJsInitialized){
+            if (!lootlyJsInitialized) {
                 var scriptUrl = $('#lootly-widget').data('script-url');
-                require([scriptUrl],function(){
+                require([scriptUrl], function () {
                     lootlyJsInitialized = true;
                 });
             }
         },
-        waitForCorrectRender: function () {
-            iterator++;
-            var customerId = that.lootlyWidget().customerId;
-            var data = that.lootlyWidget();
-            if (iterator==10){
-                customerData.reload(['lootly-widget'],false);
-                that.initializeLootlyJs();
-            }
-            if ( data['customerId']==''
-                || $('#lootly-widget').data('customer-id')!=customerId
-                || typeof data['customerId']=='undefined'
-            ){
-                setTimeout(that.waitForCorrectRender,500);
+        isCorrectlyRendered: function () {
+            var customerId = this.lootlyWidget().customerId;
+            var data = this.lootlyWidget();
+            if ($('#lootly-widget').data('customer-id') != customerId) {
+                return false;
             } else {
-                that.initializeLootlyJs();
+                return true;
             }
         }
     });
